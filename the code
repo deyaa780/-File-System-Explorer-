@@ -1,0 +1,809 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace FileSystemExplorer
+{
+    /// <summary>
+    /// Main program class that demonstrates the File System Explorer application.
+    /// This program showcases four different data structures working together:
+    /// - Tree structure for directories (hierarchical organization)
+    /// - Doubly Linked List for files within each directory
+    /// - Stack for navigation history (LIFO - Last In First Out)
+    /// - Queue for recent items (FIFO - First In First Out)
+    /// </summary>
+    internal class Program
+    {
+        /// <summary>
+        /// Entry point of the application. Demonstrates all features of the file system.
+        /// </summary>
+        /// <param name="args">Command line arguments (not used)</param>
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== FILE SYSTEM EXPLORER ===\n");
+            Console.WriteLine("A demonstration of multiple data structures working together:\n");
+            Console.WriteLine("  🌳 Tree - Directory hierarchy");
+            Console.WriteLine("  🔗 Doubly Linked List - Files in each directory");
+            Console.WriteLine("  📚 Stack - Navigation history (LIFO)");
+            Console.WriteLine("  ⏱️ Queue - Recent items (FIFO)\n");
+
+            // Create our file system instance
+            FileSystem fs = new FileSystem();
+
+            // =========================================================================
+            // 1. 🌳 TREE DEMONSTRATION - Creating directory structure
+            //    Shows hierarchical parent-child relationships
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("📂 PART 1: TREE STRUCTURE - Creating Directories");
+            Console.WriteLine(new string('=', 60));
+            
+            // Create top-level directories under Root
+            fs.CurrentDirectory.AddSubdirectory("Documents");
+            fs.CurrentDirectory.AddSubdirectory("Pictures");
+            fs.CurrentDirectory.AddSubdirectory("Music");
+
+            // Navigate to Documents and create subdirectories
+            fs.ChangeDirectory("Documents");
+            fs.CurrentDirectory.AddSubdirectory("Projects");
+            fs.CurrentDirectory.AddSubdirectory("University");
+            fs.CurrentDirectory.AddSubdirectory("Personal");
+
+            // Navigate to Projects and add more depth to the tree
+            fs.ChangeDirectory("Projects");
+            fs.CurrentDirectory.AddSubdirectory("C#");
+            fs.CurrentDirectory.AddSubdirectory("Python");
+
+            // Go back to Documents to continue demonstrations
+            fs.GoToParent(); // Back to Documents
+
+            // =========================================================================
+            // 2. 🔗 LINKED LIST DEMONSTRATION - Adding files to current directory
+            //    Each directory maintains its OWN doubly linked list of files
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("📄 PART 2: DOUBLY LINKED LIST - Adding Files to Documents");
+            Console.WriteLine(new string('=', 60));
+            
+            // Add files to Documents directory (creates a linked list)
+            fs.AddFile("essay.docx", 50);
+            fs.AddFile("notes.txt", 5);
+            fs.AddFile("presentation.pptx", 200);
+            fs.AddFile("budget.xlsx", 30);
+
+            // Demonstrate forward traversal through the linked list
+            Console.WriteLine("\n📋 Files in Documents (forward traversal using Next pointers):");
+            File current = fs.CurrentDirectory.FirstFile;
+            int fileCount = 1;
+            while (current != null)
+            {
+                Console.WriteLine($"  {fileCount}. 📄 {current.Name} ({current.Size}KB) - Created: {current.CreatedDate.ToShortTimeString()}");
+                Console.WriteLine($"     Next: {(current.Next != null ? current.Next.Name : "null")}");
+                current = current.Next;
+                fileCount++;
+            }
+
+            // Navigate to Projects and add different files (demonstrates separate linked lists)
+            fs.ChangeDirectory("Projects");
+            
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("📄 Adding Files to Projects (Separate Linked List)");
+            Console.WriteLine(new string('=', 60));
+            
+            fs.AddFile("program.cs", 15);
+            fs.AddFile("algorithm.cs", 45);
+            fs.AddFile("data.cs", 25);
+
+            // =========================================================================
+            // 3. 📚 STACK DEMONSTRATION - Navigation history
+            //    Shows LIFO (Last In First Out) behavior
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("🧭 PART 3: STACK - Navigation History (LIFO)");
+            Console.WriteLine(new string('=', 60));
+            Console.WriteLine("Let's navigate around and see the stack in action...\n");
+
+            // Perform various navigation operations to build the stack
+            fs.ChangeDirectory("C#");           // Documents/Projects/C#
+            fs.GoToParent();                     // Back to Projects
+            fs.ChangeDirectory("Python");        // Documents/Projects/Python
+            fs.GoToParent();                      // Back to Projects  
+            fs.GoToParent();                      // Back to Documents
+            fs.ChangeDirectory("University");    // Documents/University
+
+            // Display the navigation stack (most recent at top)
+            Console.WriteLine("\n📚 Navigation Stack (Top = Most Recent):");
+            Stack<Directory> history = fs.History.GetNavigationHistory();
+            int stackIndex = 1;
+            foreach (var dir in history)
+            {
+                Console.WriteLine($"  {stackIndex}. 📁 {dir.Name} (Level {dir.Level})");
+                stackIndex++;
+            }
+
+            // =========================================================================
+            // 4. ⏱️ QUEUE DEMONSTRATION - Recent items
+            //    Shows FIFO (First In First Out) behavior with a fixed size of 5
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("⏱️ PART 4: QUEUE - Recent Items (FIFO - Last 5 Items)");
+            Console.WriteLine(new string('=', 60));
+            fs.History.ShowRecentItems();
+
+            // =========================================================================
+            // 5. 📊 CURRENT STATE DISPLAY
+            //    Shows everything in the current directory
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("📊 CURRENT DIRECTORY STATE");
+            Console.WriteLine(new string('=', 60));
+            fs.DisplayCurrentDirectory();
+
+            // =========================================================================
+            // 6. 🔄 ADVANCED LINKED LIST OPERATIONS
+            //    Demonstrates bidirectional traversal and deletion
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("🔄 PART 5: ADVANCED LINKED LIST OPERATIONS");
+            Console.WriteLine(new string('=', 60));
+
+            // Navigate to Projects to work with its linked list
+            fs.GoToParent(); // Back to Documents
+            fs.ChangeDirectory("Projects");
+
+            Console.WriteLine($"\nCurrent directory: {fs.GetCurrentPath()}");
+
+            // Forward traversal demonstration
+            Console.WriteLine("\n➡️ Forward traversal (using Next pointers):");
+            current = fs.CurrentDirectory.FirstFile;
+            while (current != null)
+            {
+                Console.WriteLine($"  → {current.Name}");
+                current = current.Next;
+            }
+
+            // Backward traversal demonstration (shows doubly linked feature)
+            Console.WriteLine("\n⬅️ Backward traversal (using Previous pointers):");
+            current = fs.CurrentDirectory.LastFile;
+            while (current != null)
+            {
+                Console.WriteLine($"  ← {current.Name}");
+                current = current.Previous;
+            }
+
+            // =========================================================================
+            // 7. 🗑️ LINKED LIST DELETION DEMONSTRATION
+            //    Shows how to remove a node and update pointers
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("🗑️ PART 6: LINKED LIST DELETION");
+            Console.WriteLine(new string('=', 60));
+            
+            Console.WriteLine("\nRemoving 'program.cs' from Projects directory...");
+            fs.CurrentDirectory.RemoveFile("program.cs");
+
+            Console.WriteLine("\n📋 Files in Projects after deletion:");
+            current = fs.CurrentDirectory.FirstFile;
+            fileCount = 1;
+            while (current != null)
+            {
+                Console.WriteLine($"  {fileCount}. {current.Name}");
+                current = current.Next;
+                fileCount++;
+            }
+
+            // =========================================================================
+            // 8. 🔍 LINKED LIST SEARCH DEMONSTRATION
+            //    Shows linear search through the linked list
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("🔍 PART 7: LINKED LIST SEARCH");
+            Console.WriteLine(new string('=', 60));
+            
+            File found = fs.CurrentDirectory.FindFile("algorithm.cs");
+            if (found != null)
+                Console.WriteLine($"\n✅ Found: {found.Name} ({found.Size}KB)");
+            else
+                Console.WriteLine("\n❌ File not found");
+
+            // =========================================================================
+            // 9. 🎯 FINAL SUMMARY
+            // =========================================================================
+            Console.WriteLine("\n" + new string('=', 60));
+            Console.WriteLine("✅ PROJECT SUMMARY");
+            Console.WriteLine(new string('=', 60));
+            Console.WriteLine("\nAll four data structures demonstrated successfully:\n");
+            Console.WriteLine("  ✓ 🌳 TREE: Directory hierarchy with parent-child relationships");
+            Console.WriteLine("  ✓ 🔗 LINKED LIST: Files in each directory with Next/Previous pointers");
+            Console.WriteLine("  ✓ 📚 STACK: Navigation history with LIFO behavior");
+            Console.WriteLine("  ✓ ⏱️ QUEUE: Recent items with FIFO behavior and fixed size");
+            Console.WriteLine("\n🎉 File System Explorer completed successfully!");
+        }
+    }
+
+    // =============================================================================
+    // FILE CLASS - Represents a node in the doubly linked list
+    // =============================================================================
+
+    /// <summary>
+    /// Represents a file in the file system.
+    /// Acts as a node in a doubly linked list, allowing traversal in both directions.
+    /// Each file belongs to exactly one directory and knows its neighbors.
+    /// </summary>
+    public class File
+    {
+        /// <summary>
+        /// Gets or sets the name of the file (e.g., "document.txt").
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the size of the file in kilobytes.
+        /// </summary>
+        public int Size { get; set; }
+
+        /// <summary>
+        /// Gets or sets the creation date and time of the file.
+        /// Automatically set when the file is created.
+        /// </summary>
+        public DateTime CreatedDate { get; set; }
+
+        // ===== LINKED LIST POINTERS =====
+
+        /// <summary>
+        /// Gets or sets the next file in the directory's linked list.
+        /// Null if this is the last file in the list.
+        /// </summary>
+        public File Next { get; set; }
+
+        /// <summary>
+        /// Gets or sets the previous file in the directory's linked list.
+        /// Null if this is the first file in the list.
+        /// </summary>
+        public File Previous { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the File class.
+        /// </summary>
+        /// <param name="name">The name of the file.</param>
+        /// <param name="size">The size of the file in KB.</param>
+        public File(string name, int size)
+        {
+            Name = name;
+            Size = size;
+            CreatedDate = DateTime.Now;
+            
+            // New files are not linked to anything yet
+            Next = null;
+            Previous = null;
+        }
+    }
+
+    // =============================================================================
+    // DIRECTORY CLASS - Represents a node in the tree structure
+    // =============================================================================
+
+    /// <summary>
+    /// Represents a directory/folder in the file system.
+    /// This class implements a TREE structure through Parent/Subdirectories relationships.
+    /// Each directory also maintains its own LINKED LIST of files.
+    /// </summary>
+    public class Directory
+    {
+        // ===== TREE PROPERTIES =====
+
+        /// <summary>
+        /// Gets or sets the name of the directory.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of subdirectories (children in the tree).
+        /// Each subdirectory has this directory as its parent.
+        /// </summary>
+        public List<Directory> Subdirectories { get; set; }
+
+        /// <summary>
+        /// Gets or sets the parent directory (null for root directory).
+        /// Creates the upward link in the tree structure.
+        /// </summary>
+        public Directory Parent { get; set; }
+
+        /// <summary>
+        /// Gets or sets the depth level of this directory in the tree.
+        /// Root is level 0, its children are level 1, etc.
+        /// </summary>
+        public int Level { get; set; }
+
+        // ===== LINKED LIST PROPERTIES (for files in THIS directory only) =====
+
+        /// <summary>
+        /// Gets or sets the first file in this directory's linked list.
+        /// Null if directory is empty. This is the head of the list.
+        /// </summary>
+        public File FirstFile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the last file in this directory's linked list.
+        /// Null if directory is empty. This is the tail of the list.
+        /// </summary>
+        public File LastFile { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the Directory class.
+        /// </summary>
+        /// <param name="name">The name of the directory.</param>
+        /// <param name="parent">The parent directory (null for root).</param>
+        public Directory(string name, Directory parent = null)
+        {
+            Name = name;
+            Subdirectories = new List<Directory>();
+            Parent = parent;
+            
+            // Calculate level based on parent
+            Level = parent?.Level + 1 ?? 0;
+
+            // Initialize empty file list
+            FirstFile = null;
+            LastFile = null;
+        }
+
+        // ===== TREE METHODS =====
+
+        /// <summary>
+        /// Creates a new subdirectory under this directory.
+        /// Demonstrates tree structure by adding a child node.
+        /// </summary>
+        /// <param name="name">The name of the new subdirectory.</param>
+        public void AddSubdirectory(string name)
+        {
+            Directory newDir = new Directory(name, this); // 'this' becomes the parent
+            Subdirectories.Add(newDir);
+            Console.WriteLine($"  📂 Created folder: {GetPath()}\\{name} (Level {newDir.Level})");
+        }
+
+        /// <summary>
+        /// Gets the full path of this directory by walking up the parent chain.
+        /// Uses recursion to build the complete path from root to current.
+        /// </summary>
+        /// <returns>The full path (e.g., "Root\Documents\Projects").</returns>
+        public string GetPath()
+        {
+            if (Parent == null)
+                return Name;
+
+            return Parent.GetPath() + "\\" + Name;
+        }
+
+        // ===== LINKED LIST METHODS =====
+
+        /// <summary>
+        /// Adds a new file to this directory's linked list.
+        /// Files are added at the end (tail) of the list for O(1) insertion.
+        /// </summary>
+        /// <param name="filename">The name of the file to add.</param>
+        /// <param name="size">The size of the file in KB.</param>
+        public void AddFile(string filename, int size)
+        {
+            File newFile = new File(filename, size);
+
+            if (FirstFile == null)
+            {
+                // First file in this directory - list was empty
+                FirstFile = newFile;
+                LastFile = newFile;
+                Console.WriteLine($"  📄 Added first file to '{Name}': {filename}");
+            }
+            else
+            {
+                // Add to end of existing list - update pointers
+                LastFile.Next = newFile;      // Current last points forward to new file
+                newFile.Previous = LastFile;  // New file points back to old last
+                LastFile = newFile;            // Update tail to new file
+                Console.WriteLine($"  📄 Added file to '{Name}': {filename}");
+            }
+        }
+
+        /// <summary>
+        /// Displays all files in this directory by traversing the linked list forward.
+        /// Demonstrates forward traversal using Next pointers.
+        /// </summary>
+        public void ShowFiles()
+        {
+            if (FirstFile == null)
+            {
+                Console.WriteLine("  (no files)");
+                return;
+            }
+
+            File current = FirstFile;
+            int count = 1;
+            while (current != null)
+            {
+                Console.WriteLine($"  {count}. 📄 {current.Name} ({current.Size}KB) - {current.CreatedDate.ToShortTimeString()}");
+                current = current.Next;
+                count++;
+            }
+        }
+
+        /// <summary>
+        /// Searches for a file by name in this directory's linked list.
+        /// Demonstrates linear search through the list (O(n) time complexity).
+        /// </summary>
+        /// <param name="filename">The name of the file to find.</param>
+        /// <returns>The File object if found, null otherwise.</returns>
+        public File FindFile(string filename)
+        {
+            File current = FirstFile;
+            while (current != null)
+            {
+                if (current.Name == filename)
+                    return current;
+                current = current.Next;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Removes a file from this directory's linked list.
+        /// Demonstrates the critical pointer updates needed for linked list deletion.
+        /// Handles three cases: first node, middle node, last node.
+        /// </summary>
+        /// <param name="filename">The name of the file to remove.</param>
+        /// <returns>True if file was removed, false if not found.</returns>
+        public bool RemoveFile(string filename)
+        {
+            File fileToRemove = FindFile(filename);
+
+            if (fileToRemove == null)
+            {
+                Console.WriteLine($"  ❌ File '{filename}' not found in '{Name}'");
+                return false;
+            }
+
+            // Update the linked list pointers to bypass the removed file
+            
+            // Case 1: Not the first file - update previous file's Next pointer
+            if (fileToRemove.Previous != null)
+                fileToRemove.Previous.Next = fileToRemove.Next;
+            else
+                FirstFile = fileToRemove.Next;  // Removing first file - update head
+
+            // Case 2: Not the last file - update next file's Previous pointer
+            if (fileToRemove.Next != null)
+                fileToRemove.Next.Previous = fileToRemove.Previous;
+            else
+                LastFile = fileToRemove.Previous;  // Removing last file - update tail
+
+            Console.WriteLine($"  🗑️ Removed '{filename}' from '{Name}'");
+            
+            // Note: fileToRemove still has its pointers, but nothing references it
+            // The garbage collector will eventually clean it up
+            return true;
+        }
+    }
+
+    // =============================================================================
+    // OPERATION CLASS - Manages Stack and Queue for navigation tracking
+    // =============================================================================
+
+    /// <summary>
+    /// Manages navigation history and recent items using Stack and Queue data structures.
+    /// Stack provides LIFO (Last In First Out) behavior for back/forward navigation.
+    /// Queue provides FIFO (First In First Out) behavior for recent items list.
+    /// </summary>
+    public class Operation
+    {
+        // ===== STACK PROPERTIES (LIFO) =====
+
+        /// <summary>
+        /// Stack that stores navigation history.
+        /// Most recent directory is on top (Last In First Out).
+        /// Used for the "Back" functionality.
+        /// </summary>
+        private Stack<Directory> NavigationHistory { get; set; }
+
+        /// <summary>
+        /// Stack that stores forward navigation history.
+        /// Used for the "Forward" functionality after going back.
+        /// </summary>
+        private Stack<Directory> ForwardStack { get; set; }
+
+        // ===== QUEUE PROPERTIES (FIFO) =====
+
+        /// <summary>
+        /// Queue that stores the 5 most recently visited directories.
+        /// Oldest items are at the front and are dequeued first.
+        /// </summary>
+        public Queue<string> RecentItems { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the Operation class.
+        /// Creates empty stacks for navigation and empty queue for recent items.
+        /// </summary>
+        public Operation()
+        {
+            NavigationHistory = new Stack<Directory>();
+            ForwardStack = new Stack<Directory>();
+            RecentItems = new Queue<string>();
+        }
+
+        // ===== STACK METHODS =====
+
+        /// <summary>
+        /// Records entering a directory by pushing it onto the navigation stack.
+        /// Clears the forward stack because new navigation invalidates forward history.
+        /// Also adds to recent items queue.
+        /// </summary>
+        /// <param name="dir">The directory being entered.</param>
+        public void EnterDirectory(Directory dir)
+        {
+            // Clear forward stack - can't go forward after new navigation
+            ForwardStack.Clear();
+
+            // Push current directory to history stack (LIFO)
+            NavigationHistory.Push(dir);
+
+            // Add to recent items queue (FIFO) with timestamp
+            RecentItems.Enqueue($"{dir.Name} - {DateTime.Now.ToShortTimeString()}");
+
+            // Keep queue at maximum 5 items - remove oldest when exceeded
+            if (RecentItems.Count > 5)
+                RecentItems.Dequeue();
+        }
+
+        /// <summary>
+        /// Navigates back to the previous directory.
+        /// Pops current directory from navigation stack and pushes to forward stack.
+        /// </summary>
+        /// <returns>The previous directory, or null if can't go back.</returns>
+        public Directory GoBack()
+        {
+            if (NavigationHistory.Count > 1) // Need at least current and previous
+            {
+                // Move current directory to forward stack
+                Directory current = NavigationHistory.Pop();
+                ForwardStack.Push(current);
+
+                // Return the previous directory (now on top)
+                return NavigationHistory.Peek();
+            }
+            return null; // Can't go back from root
+        }
+
+        /// <summary>
+        /// Navigates forward to the next directory after going back.
+        /// Pops from forward stack and pushes to navigation stack.
+        /// </summary>
+        /// <returns>The next directory, or null if can't go forward.</returns>
+        public Directory GoForward()
+        {
+            if (ForwardStack.Count > 0)
+            {
+                Directory nextDir = ForwardStack.Pop();
+                NavigationHistory.Push(nextDir);
+                return nextDir;
+            }
+            return null; // No forward history
+        }
+
+        /// <summary>
+        /// Gets the entire navigation history stack.
+        /// When iterated, returns items from most recent to oldest.
+        /// </summary>
+        /// <returns>The navigation history stack.</returns>
+        public Stack<Directory> GetNavigationHistory()
+        {
+            return NavigationHistory;
+        }
+
+        // ===== QUEUE METHODS =====
+
+        /// <summary>
+        /// Displays all recent items in the queue.
+        /// Items are shown from oldest (front) to newest (back).
+        /// </summary>
+        public void ShowRecentItems()
+        {
+            if (RecentItems.Count == 0)
+            {
+                Console.WriteLine("  (no recent items)");
+                return;
+            }
+
+            Console.WriteLine("  Most recent directories (oldest to newest):");
+            int count = 1;
+            foreach (var item in RecentItems)
+            {
+                string prefix = count == 1 ? "🟢" : (count == RecentItems.Count ? "🔴" : "🟡");
+                Console.WriteLine($"  {prefix} {count}. {item}");
+                count++;
+            }
+            Console.WriteLine($"  \n  📊 Queue size: {RecentItems.Count}/5 (FIFO - oldest will be removed first)");
+        }
+    }
+
+    // =============================================================================
+    // FILESYSTEM CLASS - Main coordinator that ties everything together
+    // =============================================================================
+
+    /// <summary>
+    /// Main file system class that coordinates all data structures.
+    /// Manages the tree of directories, tracks current position,
+    /// and provides access to navigation history.
+    /// </summary>
+    public class FileSystem
+    {
+        // ===== TREE PROPERTIES =====
+
+        /// <summary>
+        /// Gets the root directory of the file system.
+        /// This is the starting point of the entire tree structure.
+        /// </summary>
+        public Directory Root { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current working directory.
+        /// This is where all file operations occur.
+        /// </summary>
+        public Directory CurrentDirectory { get; set; }
+
+        /// <summary>
+        /// Gets the operation manager that handles stack and queue functionality.
+        /// </summary>
+        public Operation History { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the FileSystem class.
+        /// Creates the root directory and sets up the operation manager.
+        /// </summary>
+        public FileSystem()
+        {
+            // Create root directory with no parent
+            Root = new Directory("Root", null);
+            
+            // Start at root
+            CurrentDirectory = Root;
+
+            // Initialize operation history
+            History = new Operation();
+            
+            // Record root as first visited directory
+            History.EnterDirectory(Root);
+
+            Console.WriteLine("  🚀 File System initialized with Root directory");
+        }
+
+        // ===== TREE NAVIGATION METHODS =====
+
+        /// <summary>
+        /// Changes the current directory to a subdirectory.
+        /// Demonstrates tree traversal by moving down one level.
+        /// </summary>
+        /// <param name="name">The name of the subdirectory to enter.</param>
+        public void ChangeDirectory(string name)
+        {
+            // Find the directory in current location's subdirectories
+            var dir = CurrentDirectory.Subdirectories.FirstOrDefault(d => d.Name == name);
+
+            if (dir != null)
+            {
+                CurrentDirectory = dir;
+                History.EnterDirectory(dir); // Add to stack and queue
+                Console.WriteLine($"\n  📂 Changed to: {GetCurrentPath()}");
+            }
+            else
+            {
+                Console.WriteLine($"\n  ❌ Directory '{name}' not found in '{CurrentDirectory.Name}'");
+            }
+        }
+
+        /// <summary>
+        /// Moves up to the parent directory.
+        /// Demonstrates tree traversal by moving up one level.
+        /// </summary>
+        public void GoToParent()
+        {
+            if (CurrentDirectory.Parent != null)
+            {
+                CurrentDirectory = CurrentDirectory.Parent;
+                History.EnterDirectory(CurrentDirectory); // Add to stack and queue
+                Console.WriteLine($"\n  ⬆️ Moved up to: {GetCurrentPath()}");
+            }
+            else
+            {
+                Console.WriteLine("\n  ⚠️ Already at root directory");
+            }
+        }
+
+        /// <summary>
+        /// Gets the full path of the current directory.
+        /// </summary>
+        /// <returns>The full path as a string.</returns>
+        public string GetCurrentPath()
+        {
+            return CurrentDirectory.GetPath();
+        }
+
+        // ===== LINKED LIST FILE METHODS =====
+
+        /// <summary>
+        /// Adds a file to the current directory.
+        /// Delegates to the current directory's linked list.
+        /// </summary>
+        /// <param name="name">The name of the file.</param>
+        /// <param name="size">The size of the file in KB.</param>
+        public void AddFile(string name, int size)
+        {
+            CurrentDirectory.AddFile(name, size);
+        }
+
+        /// <summary>
+        /// Displays comprehensive information about the current directory.
+        /// Shows subdirectories (tree children) and files (linked list).
+        /// </summary>
+        public void DisplayCurrentDirectory()
+        {
+            Console.WriteLine($"\n📁 CURRENT: {GetCurrentPath()} (Level {CurrentDirectory.Level})");
+
+            Console.WriteLine("\n📂 SUBDIRECTORIES (Tree Children):");
+            if (CurrentDirectory.Subdirectories.Count == 0)
+            {
+                Console.WriteLine("  (none)");
+            }
+            else
+            {
+                foreach (var dir in CurrentDirectory.Subdirectories)
+                {
+                    string indent = new string(' ', dir.Level * 2);
+                    Console.WriteLine($"  {indent}📂 {dir.Name} (Level {dir.Level})");
+                }
+            }
+
+            Console.WriteLine("\n📄 FILES (Linked List in this directory):");
+            CurrentDirectory.ShowFiles();
+
+            Console.WriteLine($"\n📊 Statistics:");
+            Console.WriteLine($"  • Subdirectories: {CurrentDirectory.Subdirectories.Count}");
+            Console.WriteLine($"  • Files in this directory: {CountFiles(CurrentDirectory)}");
+            Console.WriteLine($"  • Total files in all subdirectories: {CountAllFiles(CurrentDirectory)}");
+        }
+
+        /// <summary>
+        /// Counts files in the current directory only.
+        /// Helper method for statistics.
+        /// </summary>
+        /// <param name="dir">The directory to count files in.</param>
+        /// <returns>Number of files in this directory.</returns>
+        private int CountFiles(Directory dir)
+        {
+            int count = 0;
+            File current = dir.FirstFile;
+            while (current != null)
+            {
+                count++;
+                current = current.Next;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Recursively counts all files in this directory and all subdirectories.
+        /// Demonstrates tree traversal combined with linked list counting.
+        /// </summary>
+        /// <param name="dir">The directory to start counting from.</param>
+        /// <returns>Total number of files in the entire subtree.</returns>
+        private int CountAllFiles(Directory dir)
+        {
+            int count = CountFiles(dir); // Files in current dir
+            
+            // Recursively count files in all subdirectories
+            foreach (var subdir in dir.Subdirectories)
+            {
+                count += CountAllFiles(subdir);
+            }
+            
+            return count;
+        }
+    }
+}
